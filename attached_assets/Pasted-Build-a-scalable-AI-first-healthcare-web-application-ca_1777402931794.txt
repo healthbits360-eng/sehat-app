@@ -1,0 +1,167 @@
+Build a scalable AI-first healthcare web application called “RecoveryOS”.
+
+## 🎯 Objective
+
+Create a structured recovery and rehabilitation platform where patients can:
+
+* onboard with their health condition
+* receive AI-generated recovery plans
+* track daily progress
+* interact with AI and human experts
+
+The system should be modular and scalable for future mobile app and SaaS expansion.
+
+---
+
+## 🧱 Tech Stack
+
+* Frontend: React (with clean UI, mobile responsive)
+* Backend: Node.js with Express
+* Database: PostgreSQL (use Prisma ORM)
+* Authentication: JWT-based auth
+* AI Integration: Placeholder service (OpenAI-ready architecture)
+
+---
+
+## 👤 User Roles
+
+1. Patient
+2. Admin (Physiotherapist / Pharmacist)
+
+---
+
+## 🔑 Core Features
+
+### 1. Authentication
+
+* Signup/Login (email + password)
+* Role-based access (patient/admin)
+
+---
+
+### 2. Patient Onboarding
+
+* Form to collect:
+
+  * age
+  * gender
+  * condition (dropdown: back pain, post-surgery, etc.)
+  * symptoms
+  * pain level (1–10)
+  * medical history
+* File upload (reports/images)
+
+---
+
+### 3. AI Recovery Plan Engine
+
+* Create a service layer:
+  /services/aiPlanGenerator.js
+
+* Function:
+  generateRecoveryPlan(patientData)
+
+* For now:
+  return mock structured JSON:
+  {
+  exercises: [],
+  lifestyleTips: [],
+  precautions: [],
+  weeklyPlan: []
+  }
+
+* Keep it ready for OpenAI API integration later
+
+---
+
+### 4. Dashboard (Patient)
+
+* View recovery plan
+* Daily checklist:
+
+  * exercises completed (checkbox)
+  * pain score update
+* Progress graph (basic)
+
+---
+
+### 5. Daily Tracking System
+
+* Save:
+
+  * pain score
+  * adherence %
+* Store in database
+* Show history
+
+---
+
+### 6. Admin Panel
+
+* View all patients
+* Open patient profile
+* Edit recovery plan manually
+* Add notes
+
+---
+
+### 7. Chat System (Basic)
+
+* Patient ↔ AI chat (mock for now)
+* Structure for future real-time chat
+
+---
+
+### 8. Subscription Logic (Basic)
+
+* Free vs Paid flag
+* Restrict some features for free users
+
+---
+
+## 🗂️ Folder Structure
+
+* /frontend
+* /backend
+
+  * /routes
+  * /controllers
+  * /models
+  * /services
+  * /middleware
+
+---
+
+## 🎨 UI Requirements
+
+* Clean, medical-style UI
+* Simple onboarding flow
+* Mobile-friendly (important)
+
+---
+
+## ⚡ Scalability Considerations
+
+* Modular services (AI, auth, tracking)
+* API-first architecture
+* Easy to convert into mobile app later
+
+---
+
+## 🚀 Bonus (if possible)
+
+* Add notification system placeholder
+* Add WhatsApp integration placeholder
+
+---
+
+## ❗Important
+
+* Write clean, well-structured code
+* Add comments for each major function
+* Do not overcomplicate UI
+* Focus on working MVP with solid backend
+
+---
+
+Build the full project step by step and explain how to run it.

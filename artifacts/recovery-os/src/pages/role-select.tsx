@@ -1,0 +1,69 @@
+import { useSetRole } from "@workspace/api-client-react";
+import { useLocation } from "wouter";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { User, Stethoscope } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { getGetMeQueryKey } from "@workspace/api-client-react";
+
+export default function RoleSelect() {
+  const [, setLocation] = useLocation();
+  const setRole = useSetRole();
+  const queryClient = useQueryClient();
+
+  const handleSelectRole = (role: "patient" | "admin") => {
+    setRole.mutate({ data: { role } }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
+        if (role === "patient") {
+          setLocation("/onboarding");
+        } else {
+          setLocation("/admin");
+        }
+      }
+    });
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="max-w-2xl w-full">
+        <div className="text-center mb-10">
+          <h1 className="font-serif text-4xl font-bold text-foreground mb-4">Welcome to RecoveryOS</h1>
+          <p className="text-lg text-muted-foreground">How will you be using the platform?</p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6">
+          <Card className="cursor-pointer hover:border-primary transition-colors border-2" onClick={() => handleSelectRole("patient")}>
+            <CardHeader className="text-center pb-2">
+              <div className="mx-auto bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mb-4 text-primary">
+                <User className="w-8 h-8" />
+              </div>
+              <CardTitle className="text-2xl font-serif">I'm a Patient</CardTitle>
+              <CardDescription>
+                I want to manage my recovery, track my progress, and get a personalized plan.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center pt-4">
+              <Button variant="outline" className="w-full" disabled={setRole.isPending}>Select Patient</Button>
+            </CardContent>
+          </Card>
+
+          <Card className="cursor-pointer hover:border-primary transition-colors border-2" onClick={() => handleSelectRole("admin")}>
+            <CardHeader className="text-center pb-2">
+              <div className="mx-auto bg-secondary/10 w-16 h-16 rounded-full flex items-center justify-center mb-4 text-secondary">
+                <Stethoscope className="w-8 h-8" />
+              </div>
+              <CardTitle className="text-2xl font-serif">I'm a Clinician</CardTitle>
+              <CardDescription>
+                I want to oversee my patients, review their progress, and manage their care plans.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center pt-4">
+              <Button variant="outline" className="w-full" disabled={setRole.isPending}>Select Clinician</Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -3,13 +3,33 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: RecoveryOS API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: Auth
+    description: Browser and mobile authentication endpoints.
+  - name: Profile
+    description: Current user profile and role
+  - name: Onboarding
+    description: Patient onboarding
+  - name: Plan
+    description: AI-generated recovery plans
+  - name: Tracking
+    description: Daily progress tracking
+  - name: Dashboard
+    description: Patient dashboard summary
+  - name: Chat
+    description: AI chat assistant
+  - name: Subscription
+    description: Plan tier and feature gating
+  - name: Admin
+    description: Admin / clinician operations
+  - name: Reference
+    description: Static reference data (conditions, etc.)
 paths:
   /healthz:
     get:
@@ -24,7 +44,571 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/user:
+    get:
+      tags: [Auth]
+      operationId: getCurrentAuthUser
+      summary: Get the currently authenticated user
+      parameters:
+        - $ref: '#/components/parameters/AuthorizationSessionHeader'
+        - $ref: '#/components/parameters/SessionCookie'
+      responses:
+        '200':
+          description: Auth status resolved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthUserEnvelope'
+  /login:
+    get:
+      tags: [Auth]
+      operationId: beginBrowserLogin
+      summary: Start the browser OIDC login flow
+      parameters:
+        - name: returnTo
+          in: query
+          required: false
+          description: Relative path to redirect to after login (must start with `/`). Defaults to `/`.
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect to the OIDC authorization endpoint.
+  /callback:
+    get:
+      tags: [Auth]
+      operationId: handleBrowserLoginCallback
+      summary: Complete the browser OIDC login flow
+      parameters:
+        - name: code
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: iss
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uri
+      responses:
+        '302':
+          description: Redirect to the `returnTo` path on success or `/api/login` on failure.
+  /logout:
+    get:
+      tags: [Auth]
+      operationId: logoutBrowserSession
+      summary: Clear the session and begin OIDC logout
+      parameters:
+        - $ref: '#/components/parameters/AuthorizationSessionHeader'
+        - $ref: '#/components/parameters/SessionCookie'
+      responses:
+        '302':
+          description: Redirect to the OIDC provider logout URL.
+  /mobile-auth/token-exchange:
+    post:
+      tags: [Auth]
+      operationId: exchangeMobileAuthorizationCode
+      summary: Exchange a mobile OIDC code for a session token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MobileTokenExchangeRequest'
+      responses:
+        '200':
+          description: Session created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MobileTokenExchangeSuccess'
+        '400':
+          description: Missing or invalid required fields.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: Token did not contain usable claims.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Token exchange failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /mobile-auth/logout:
+    post:
+      tags: [Auth]
+      operationId: logoutMobileSession
+      summary: Delete a mobile session token
+      parameters:
+        - $ref: '#/components/parameters/AuthorizationSessionHeader'
+      responses:
+        '200':
+          description: Logout processed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogoutSuccess'
+
+  /me:
+    get:
+      tags: [Profile]
+      operationId: getMe
+      summary: Get the current user's profile, role, and onboarding state
+      responses:
+        '200':
+          description: Profile loaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Me'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /me/role:
+    put:
+      tags: [Profile]
+      operationId: setRole
+      summary: Set the current user's role (only allowed once, then locked)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetRoleRequest'
+      responses:
+        '200':
+          description: Role set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Me'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /onboarding:
+    post:
+      tags: [Onboarding]
+      operationId: submitOnboarding
+      summary: Submit patient onboarding data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OnboardingBody'
+      responses:
+        '200':
+          description: Patient profile created or updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /patient/profile:
+    get:
+      tags: [Onboarding]
+      operationId: getMyPatientProfile
+      summary: Get the current user's patient profile
+      responses:
+        '200':
+          description: Patient profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /patient/plan:
+    get:
+      tags: [Plan]
+      operationId: getMyRecoveryPlan
+      summary: Get the current user's recovery plan
+      responses:
+        '200':
+          description: Recovery plan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecoveryPlan'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /patient/plan/generate:
+    post:
+      tags: [Plan]
+      operationId: generateMyRecoveryPlan
+      summary: Generate (or regenerate) an AI recovery plan from the patient profile
+      responses:
+        '200':
+          description: New recovery plan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecoveryPlan'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '402':
+          description: Feature requires a paid subscription
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /patient/tracking:
+    get:
+      tags: [Tracking]
+      operationId: listMyTrackingEntries
+      summary: List daily tracking entries (most recent first)
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 90
+            default: 30
+      responses:
+        '200':
+          description: Tracking history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TrackingEntry'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Tracking]
+      operationId: upsertMyTrackingEntry
+      summary: Create or update today's tracking entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrackingEntryBody'
+      responses:
+        '200':
+          description: Saved entry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrackingEntry'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /patient/dashboard:
+    get:
+      tags: [Dashboard]
+      operationId: getMyDashboard
+      summary: Get a dashboard summary for the current patient
+      responses:
+        '200':
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientDashboard'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /patient/chat:
+    get:
+      tags: [Chat]
+      operationId: listMyChatMessages
+      summary: List chat history with the AI assistant
+      responses:
+        '200':
+          description: Chat history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ChatMessage'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Chat]
+      operationId: sendMyChatMessage
+      summary: Send a message to the AI assistant and get a reply
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendChatMessageBody'
+      responses:
+        '200':
+          description: Latest user + assistant pair
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatExchange'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '402':
+          description: Free tier message limit reached
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /me/subscription:
+    get:
+      tags: [Subscription]
+      operationId: getMySubscription
+      summary: Get the current user's subscription tier
+      responses:
+        '200':
+          description: Subscription info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    put:
+      tags: [Subscription]
+      operationId: updateMySubscription
+      summary: Update subscription tier (mock — flips between free and paid)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSubscriptionBody'
+      responses:
+        '200':
+          description: Updated subscription
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /admin/dashboard:
+    get:
+      tags: [Admin]
+      operationId: getAdminDashboard
+      summary: Admin overview of patients, adherence, and pain
+      responses:
+        '200':
+          description: Admin dashboard
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminDashboard'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /admin/patients:
+    get:
+      tags: [Admin]
+      operationId: listAdminPatients
+      summary: List all patients (admin)
+      parameters:
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: condition
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Patients
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminPatientRow'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /admin/patients/{patientId}:
+    get:
+      tags: [Admin]
+      operationId: getAdminPatient
+      summary: Get a single patient's full record (admin)
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Patient detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminPatientDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /admin/patients/{patientId}/plan:
+    put:
+      tags: [Admin]
+      operationId: updateAdminPatientPlan
+      summary: Manually edit a patient's recovery plan (admin)
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecoveryPlanContent'
+      responses:
+        '200':
+          description: Updated plan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecoveryPlan'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /admin/patients/{patientId}/notes:
+    get:
+      tags: [Admin]
+      operationId: listAdminPatientNotes
+      summary: List clinician notes for a patient
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Notes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ClinicianNote'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags: [Admin]
+      operationId: createAdminPatientNote
+      summary: Add a clinician note for a patient
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateClinicianNoteBody'
+      responses:
+        '200':
+          description: Created note
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClinicianNote'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /reference/conditions:
+    get:
+      tags: [Reference]
+      operationId: listConditions
+      summary: List the supported recovery conditions
+      responses:
+        '200':
+          description: Conditions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Condition'
+
 components:
+  parameters:
+    AuthorizationSessionHeader:
+      name: Authorization
+      in: header
+      required: false
+      description: Opaque session token — `Bearer <sid>`.
+      schema:
+        type: string
+    SessionCookie:
+      name: sid
+      in: cookie
+      required: false
+      description: Browser session cookie.
+      schema:
+        type: string
+  responses:
+    Unauthorized:
+      description: Missing or invalid authentication
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    Forbidden:
+      description: Authenticated but not allowed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
   schemas:
     HealthStatus:
       type: object
@@ -34,3 +618,488 @@ components:
       required:
         - status
 
+    AuthUser:
+      type: object
+      required: [id, email, firstName, lastName, profileImageUrl]
+      properties:
+        id:
+          type: string
+        email:
+          type: [string, 'null']
+          format: email
+        firstName:
+          type: [string, 'null']
+        lastName:
+          type: [string, 'null']
+        profileImageUrl:
+          type: [string, 'null']
+    AuthUserEnvelope:
+      type: object
+      required: [user]
+      properties:
+        user:
+          oneOf:
+            - $ref: '#/components/schemas/AuthUser'
+            - type: 'null'
+    MobileTokenExchangeRequest:
+      type: object
+      required: [code, code_verifier, redirect_uri, state]
+      properties:
+        code:
+          type: string
+          minLength: 1
+        code_verifier:
+          type: string
+          minLength: 1
+        redirect_uri:
+          type: string
+          minLength: 1
+          format: uri
+        state:
+          type: string
+          minLength: 1
+        nonce:
+          type: string
+          minLength: 1
+    MobileTokenExchangeSuccess:
+      type: object
+      required: [token]
+      properties:
+        token:
+          type: string
+    LogoutSuccess:
+      type: object
+      required: [success]
+      properties:
+        success:
+          type: boolean
+          const: true
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    Role:
+      type: string
+      enum: [patient, admin]
+
+    Me:
+      type: object
+      required: [user, role, onboardingComplete, subscriptionTier]
+      properties:
+        user:
+          $ref: '#/components/schemas/AuthUser'
+        role:
+          oneOf:
+            - $ref: '#/components/schemas/Role'
+            - type: 'null'
+        onboardingComplete:
+          type: boolean
+        subscriptionTier:
+          $ref: '#/components/schemas/SubscriptionTier'
+
+    SetRoleRequest:
+      type: object
+      required: [role]
+      properties:
+        role:
+          $ref: '#/components/schemas/Role'
+
+    Condition:
+      type: object
+      required: [id, label, description]
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        description:
+          type: string
+
+    OnboardingBody:
+      type: object
+      required: [age, gender, conditionId, symptoms, painLevel, medicalHistory]
+      properties:
+        age:
+          type: integer
+          minimum: 1
+          maximum: 120
+        gender:
+          type: string
+          enum: [female, male, nonbinary, prefer_not_to_say]
+        conditionId:
+          type: string
+        symptoms:
+          type: string
+          maxLength: 2000
+        painLevel:
+          type: integer
+          minimum: 1
+          maximum: 10
+        medicalHistory:
+          type: string
+          maxLength: 4000
+        reportFileName:
+          type: [string, 'null']
+
+    PatientProfile:
+      type: object
+      required: [id, userId, age, gender, conditionId, conditionLabel, symptoms, painLevel, medicalHistory, reportFileName, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        age:
+          type: integer
+        gender:
+          type: string
+        conditionId:
+          type: string
+        conditionLabel:
+          type: string
+        symptoms:
+          type: string
+        painLevel:
+          type: integer
+        medicalHistory:
+          type: string
+        reportFileName:
+          type: [string, 'null']
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Exercise:
+      type: object
+      required: [name, sets, reps, durationMinutes, instructions]
+      properties:
+        name:
+          type: string
+        sets:
+          type: integer
+        reps:
+          type: integer
+        durationMinutes:
+          type: integer
+        instructions:
+          type: string
+
+    WeeklyDay:
+      type: object
+      required: [day, focus, activities]
+      properties:
+        day:
+          type: string
+        focus:
+          type: string
+        activities:
+          type: array
+          items:
+            type: string
+
+    RecoveryPlanContent:
+      type: object
+      required: [summary, exercises, lifestyleTips, precautions, weeklyPlan]
+      properties:
+        summary:
+          type: string
+        exercises:
+          type: array
+          items:
+            $ref: '#/components/schemas/Exercise'
+        lifestyleTips:
+          type: array
+          items:
+            type: string
+        precautions:
+          type: array
+          items:
+            type: string
+        weeklyPlan:
+          type: array
+          items:
+            $ref: '#/components/schemas/WeeklyDay'
+
+    RecoveryPlan:
+      type: object
+      required: [id, patientId, content, generatedBy, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+        patientId:
+          type: string
+        content:
+          $ref: '#/components/schemas/RecoveryPlanContent'
+        generatedBy:
+          type: string
+          enum: [ai, admin]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    TrackingEntryBody:
+      type: object
+      required: [painScore, completedExercises, totalExercises, notes]
+      properties:
+        painScore:
+          type: integer
+          minimum: 0
+          maximum: 10
+        completedExercises:
+          type: integer
+          minimum: 0
+        totalExercises:
+          type: integer
+          minimum: 0
+        notes:
+          type: string
+          maxLength: 1000
+
+    TrackingEntry:
+      type: object
+      required: [id, patientId, date, painScore, completedExercises, totalExercises, adherencePercent, notes, createdAt]
+      properties:
+        id:
+          type: string
+        patientId:
+          type: string
+        date:
+          type: string
+          format: date
+        painScore:
+          type: integer
+        completedExercises:
+          type: integer
+        totalExercises:
+          type: integer
+        adherencePercent:
+          type: integer
+        notes:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    PatientDashboard:
+      type: object
+      required: [hasProfile, hasPlan, streakDays, latestPainScore, averagePainScore, averageAdherence, totalCheckins, weeklyTrend, todaysActivities, nextActions]
+      properties:
+        hasProfile:
+          type: boolean
+        hasPlan:
+          type: boolean
+        streakDays:
+          type: integer
+        latestPainScore:
+          type: [integer, 'null']
+        averagePainScore:
+          type: [number, 'null']
+        averageAdherence:
+          type: [number, 'null']
+        totalCheckins:
+          type: integer
+        weeklyTrend:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrackingEntry'
+        todaysActivities:
+          type: array
+          items:
+            $ref: '#/components/schemas/Exercise'
+        nextActions:
+          type: array
+          items:
+            type: string
+
+    ChatMessage:
+      type: object
+      required: [id, role, content, createdAt]
+      properties:
+        id:
+          type: string
+        role:
+          type: string
+          enum: [user, assistant]
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    SendChatMessageBody:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+          minLength: 1
+          maxLength: 2000
+
+    ChatExchange:
+      type: object
+      required: [userMessage, assistantMessage]
+      properties:
+        userMessage:
+          $ref: '#/components/schemas/ChatMessage'
+        assistantMessage:
+          $ref: '#/components/schemas/ChatMessage'
+
+    SubscriptionTier:
+      type: string
+      enum: [free, paid]
+
+    Subscription:
+      type: object
+      required: [tier, planRegenerationsRemaining, chatMessagesRemaining, features]
+      properties:
+        tier:
+          $ref: '#/components/schemas/SubscriptionTier'
+        planRegenerationsRemaining:
+          type: integer
+        chatMessagesRemaining:
+          type: integer
+        features:
+          type: array
+          items:
+            type: string
+
+    UpdateSubscriptionBody:
+      type: object
+      required: [tier]
+      properties:
+        tier:
+          $ref: '#/components/schemas/SubscriptionTier'
+
+    AdminPatientRow:
+      type: object
+      required: [patientId, userId, displayName, email, conditionLabel, painLevel, latestPainScore, latestAdherence, lastCheckinAt, hasPlan, createdAt]
+      properties:
+        patientId:
+          type: string
+        userId:
+          type: string
+        displayName:
+          type: string
+        email:
+          type: [string, 'null']
+        conditionLabel:
+          type: string
+        painLevel:
+          type: integer
+        latestPainScore:
+          type: [integer, 'null']
+        latestAdherence:
+          type: [integer, 'null']
+        lastCheckinAt:
+          type: [string, 'null']
+          format: date-time
+        hasPlan:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    AdminPatientDetail:
+      type: object
+      required: [profile, user, plan, recentTracking, notes]
+      properties:
+        profile:
+          $ref: '#/components/schemas/PatientProfile'
+        user:
+          $ref: '#/components/schemas/AuthUser'
+        plan:
+          oneOf:
+            - $ref: '#/components/schemas/RecoveryPlan'
+            - type: 'null'
+        recentTracking:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrackingEntry'
+        notes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClinicianNote'
+
+    ClinicianNote:
+      type: object
+      required: [id, patientId, authorId, authorName, content, createdAt]
+      properties:
+        id:
+          type: string
+        patientId:
+          type: string
+        authorId:
+          type: string
+        authorName:
+          type: string
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateClinicianNoteBody:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+          minLength: 1
+          maxLength: 2000
+
+    AdminConditionBreakdown:
+      type: object
+      required: [conditionLabel, count]
+      properties:
+        conditionLabel:
+          type: string
+        count:
+          type: integer
+
+    AdminDashboard:
+      type: object
+      required: [totalPatients, activePatientsLast7Days, averagePainScore, averageAdherence, conditionBreakdown, recentCheckins]
+      properties:
+        totalPatients:
+          type: integer
+        activePatientsLast7Days:
+          type: integer
+        averagePainScore:
+          type: [number, 'null']
+        averageAdherence:
+          type: [number, 'null']
+        conditionBreakdown:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminConditionBreakdown'
+        recentCheckins:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminCheckinRow'
+
+    AdminCheckinRow:
+      type: object
+      required: [patientId, displayName, conditionLabel, painScore, adherencePercent, date]
+      properties:
+        patientId:
+          type: string
+        displayName:
+          type: string
+        conditionLabel:
+          type: string
+        painScore:
+          type: integer
+        adherencePercent:
+          type: integer
+        date:
+          type: string
+          format: date
