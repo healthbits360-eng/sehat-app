@@ -1,7 +1,7 @@
 export default function PatientDashboard() {
   return (
-    <div style={{ padding: "40px", fontSize: "24px" }}>
-      Dashboard WORKING ✅
+    <div style={{ padding: 40 }}>
+      Patient Dashboard UI ✅
     </div>
   );
 }
