@@ -1,0 +1,134 @@
+Upgrade the existing app with the following changes:
+
+---
+
+## 🏷️ 1. Rebrand App to "Sehat"
+
+---
+
+* Replace all app names with "Sehat"
+
+* Update:
+
+  * Navbar title
+  * Login / signup screens
+  * Onboarding screens
+  * Browser title (document.title)
+
+* Add tagline below name:
+  "Sehat – Aapki Health ka Saathi"
+
+---
+
+## 🌐 2. Add Language Selection (English + Simple Hindi)
+
+---
+
+### Requirements:
+
+1. Add language selector:
+
+   * On first onboarding screen
+   * Also in settings page
+
+2. Languages:
+
+   * English (default)
+   * Simple Hindi
+
+3. Store selected language in:
+
+   * localStorage (key: "appLanguage")
+
+4. Create translation files:
+
+   * /locales/en.json
+   * /locales/hi.json
+
+5. Use simple, easy Hindi (not complex medical terms)
+
+Example:
+
+en.json:
+{
+"welcome": "Welcome to Sehat",
+"start": "Start",
+"painLevel": "Pain Level",
+"dailyCheck": "Daily Check"
+}
+
+hi.json:
+{
+"welcome": "Sehat mein swagat hai",
+"start": "Shuru karein",
+"painLevel": "Dard ka level",
+"dailyCheck": "Aaj ki jaanch"
+}
+
+6. Create helper function:
+   t("key")
+
+7. Replace all UI text with translation keys across:
+
+   * onboarding
+   * dashboard
+   * buttons
+   * forms
+
+---
+
+## 📰 3. Connect to HealthBits360 Website
+
+---
+
+Goal: Show educational content inside app
+
+### Add new section:
+
+* Name: "Sehat Sikhein" (Hindi) / "Learn" (English)
+
+### Features:
+
+1. Create a simple content service:
+   /services/contentService.js
+
+2. For now, use static/mock data with links:
+
+Example:
+{
+title: "Back Pain Recovery Tips",
+description: "Simple ways to reduce back pain",
+url: "https://www.healthbits360.com/"
+}
+
+3. Display:
+
+   * Title
+   * Short description
+   * "Read More" button → opens website link
+
+4. Make UI mobile-friendly
+
+---
+
+## ⚙️ 4. Keep It Clean and Working
+
+---
+
+* Do NOT break existing features
+* Keep UI simple
+* Ensure app runs without errors
+* Test both languages
+
+---
+
+## 🚀 Final Output
+
+---
+
+* App renamed to Sehat
+* Language toggle working
+* Articles section visible
+* Fully functional app
+
+Build step-by-step and test after each feature.

@@ -1,6 +1,16 @@
-# RecoveryOS
+# Sehat
 
-AI-first healthcare recovery and rehabilitation web app. Patients onboard with their condition, get an AI-generated recovery plan, log daily check-ins (pain + adherence), chat with an AI assistant, and clinicians review patients, edit plans, and add notes. Includes a free vs paid subscription tier with feature gating.
+AI-first healthcare recovery and rehabilitation web app (formerly "RecoveryOS"). Tagline: "Sehat – Aapki Health ka Saathi". Patients onboard with their condition, get an AI-generated recovery plan, log daily check-ins (pain + adherence), chat with an AI assistant, and clinicians review patients, edit plans, and add notes. Free vs paid tier with feature gating. Bilingual: English (default) and simple Hindi (Latin-script).
+
+## i18n
+Lightweight in-house i18n at `src/lib/i18n/`:
+- `en.json` / `hi.json` — flat key/value dictionaries
+- `index.tsx` — `<I18nProvider>` (wraps the app), `useT()` hook returns `{ language, setLanguage, t }`
+- Selected language persisted to `localStorage["appLanguage"]`
+- `<LanguageSelect>` component used on landing, role-select, onboarding, and Settings
+
+## Learn section
+`/learn` (patient nav, "Sehat Sikhein" in Hindi) — mock article cards from `src/services/contentService.ts` linking out to https://www.healthbits360.com/.
 
 ## Architecture
 

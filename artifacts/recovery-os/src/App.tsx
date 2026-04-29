@@ -2,6 +2,7 @@ import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { I18nProvider } from "@/lib/i18n";
 import NotFound from "@/pages/not-found";
 
 import Landing from "./pages/landing";
@@ -14,6 +15,7 @@ import PatientDashboard from "./pages/patient-dashboard";
 import PatientPlan from "./pages/patient-plan";
 import PatientTracking from "./pages/patient-tracking";
 import PatientChat from "./pages/patient-chat";
+import Learn from "./pages/learn";
 import Settings from "./pages/settings";
 
 import AdminDashboard from "./pages/admin-dashboard";
@@ -64,6 +66,12 @@ function Router() {
         </ProtectedRoute>
       </Route>
 
+      <Route path="/learn">
+        <ProtectedRoute allowedRole="patient">
+          <AppShell><Learn /></AppShell>
+        </ProtectedRoute>
+      </Route>
+
       {/* Admin Routes */}
       <Route path="/admin">
         <ProtectedRoute allowedRole="admin">
@@ -97,14 +105,16 @@ function Router() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <Router />
-        </WouterRouter>
-        <Toaster />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <I18nProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+            <Router />
+          </WouterRouter>
+          <Toaster />
+        </TooltipProvider>
+      </QueryClientProvider>
+    </I18nProvider>
   );
 }
 

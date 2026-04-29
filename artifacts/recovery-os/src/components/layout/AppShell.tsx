@@ -2,19 +2,21 @@ import { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@workspace/replit-auth-web";
 import { useGetMe } from "@workspace/api-client-react";
-import { 
-  Activity, 
-  HeartPulse, 
-  MessageCircle, 
-  Settings, 
-  Users, 
+import {
+  Activity,
+  BookOpen,
+  HeartPulse,
+  MessageCircle,
+  Settings,
+  Users,
   LayoutDashboard,
   LogOut,
-  Menu
+  Menu,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useT } from "@/lib/i18n";
 
 interface AppShellProps {
   children: ReactNode;
@@ -24,22 +26,24 @@ export function AppShell({ children }: AppShellProps) {
   const [location] = useLocation();
   const { user, logout } = useAuth();
   const { data: me } = useGetMe({ query: { enabled: !!user } });
+  const { t } = useT();
 
   const isPatient = me?.role === "patient";
   const isAdmin = me?.role === "admin";
 
   const patientNav = [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/plan", label: "My Plan", icon: HeartPulse },
-    { href: "/tracking", label: "Tracking", icon: Activity },
-    { href: "/chat", label: "Assistant", icon: MessageCircle },
-    { href: "/settings", label: "Settings", icon: Settings },
+    { href: "/dashboard", label: t("nav.dashboard"), icon: LayoutDashboard },
+    { href: "/plan", label: t("nav.plan"), icon: HeartPulse },
+    { href: "/tracking", label: t("nav.tracking"), icon: Activity },
+    { href: "/chat", label: t("nav.assistant"), icon: MessageCircle },
+    { href: "/learn", label: t("nav.learn"), icon: BookOpen },
+    { href: "/settings", label: t("nav.settings"), icon: Settings },
   ];
 
   const adminNav = [
-    { href: "/admin", label: "Overview", icon: LayoutDashboard },
-    { href: "/admin/patients", label: "Patients", icon: Users },
-    { href: "/settings", label: "Settings", icon: Settings },
+    { href: "/admin", label: t("nav.overview"), icon: LayoutDashboard },
+    { href: "/admin/patients", label: t("nav.patients"), icon: Users },
+    { href: "/settings", label: t("nav.settings"), icon: Settings },
   ];
 
   const navItems = isAdmin ? adminNav : isPatient ? patientNav : [];
@@ -70,7 +74,7 @@ export function AppShell({ children }: AppShellProps) {
           <span className="text-xs text-muted-foreground truncate">{me?.role || "Welcome"}</span>
         </div>
       </div>
-      <Button variant="ghost" size="icon" onClick={logout} title="Sign out" className="shrink-0 text-muted-foreground hover:text-foreground">
+      <Button variant="ghost" size="icon" onClick={logout} title={t("common.signOut")} className="shrink-0 text-muted-foreground hover:text-foreground">
         <LogOut className="h-5 w-5" />
       </Button>
     </div>
@@ -83,7 +87,7 @@ export function AppShell({ children }: AppShellProps) {
         <div className="h-16 flex items-center px-6 border-b shrink-0">
           <Link href="/" className="flex items-center gap-2 font-serif font-semibold text-xl text-primary">
             <HeartPulse className="h-6 w-6 text-primary" />
-            RecoveryOS
+            {t("app.name")}
           </Link>
         </div>
         <div className="flex-1 overflow-y-auto">
@@ -97,7 +101,7 @@ export function AppShell({ children }: AppShellProps) {
         <header className="md:hidden h-16 flex items-center justify-between px-4 border-b bg-background shrink-0 sticky top-0 z-10">
           <Link href="/" className="flex items-center gap-2 font-serif font-semibold text-lg text-primary">
             <HeartPulse className="h-5 w-5 text-primary" />
-            RecoveryOS
+            {t("app.name")}
           </Link>
           <Sheet>
             <SheetTrigger asChild>
@@ -109,7 +113,7 @@ export function AppShell({ children }: AppShellProps) {
               <div className="h-16 flex items-center px-6 border-b shrink-0">
                 <span className="flex items-center gap-2 font-serif font-semibold text-xl text-primary">
                   <HeartPulse className="h-6 w-6 text-primary" />
-                  RecoveryOS
+                  {t("app.name")}
                 </span>
               </div>
               <div className="flex-1 overflow-y-auto">

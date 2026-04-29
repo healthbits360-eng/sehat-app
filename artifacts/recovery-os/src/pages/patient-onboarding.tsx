@@ -20,6 +20,8 @@ import { Slider } from "@/components/ui/slider";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { HeartPulse, Loader2 } from "lucide-react";
+import { LanguageSelect } from "@/components/LanguageSelect";
+import { useT } from "@/lib/i18n";
 
 const onboardingSchema = z.object({
   age: z.coerce.number().min(1).max(120),
@@ -37,6 +39,7 @@ export default function PatientOnboarding() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [reportFileName, setReportFileName] = useState<string | null>(null);
+  const { t } = useT();
   
   const { data: conditions, isLoading: conditionsLoading } = useListConditions();
   const submitOnboarding = useSubmitOnboarding();
@@ -64,18 +67,18 @@ export default function PatientOnboarding() {
       });
 
       toast({
-        title: "Profile saved",
-        description: "Generating your personalized recovery plan...",
+        title: t("onboarding.profileSaved"),
+        description: t("onboarding.generatingDesc"),
       });
 
       await generatePlan.mutateAsync({});
-      
+
       queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
       setLocation("/dashboard");
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to complete onboarding. Please try again.",
+        description: t("onboarding.error"),
         variant: "destructive",
       });
     }
@@ -86,16 +89,20 @@ export default function PatientOnboarding() {
   return (
     <div className="min-h-screen bg-background py-12 px-4 flex justify-center">
       <div className="max-w-2xl w-full">
+        <div className="flex justify-end mb-4">
+          <LanguageSelect variant="compact" />
+        </div>
         <div className="text-center mb-10">
           <HeartPulse className="h-12 w-12 text-primary mx-auto mb-4" />
-          <h1 className="font-serif text-3xl font-bold text-foreground">Welcome to RecoveryOS</h1>
-          <p className="text-muted-foreground mt-2">Let's personalize your recovery journey</p>
+          <h1 className="font-serif text-3xl font-bold text-foreground">{t("onboarding.title")}</h1>
+          <p className="text-muted-foreground mt-2">{t("onboarding.subtitle")}</p>
+          <p className="text-xs text-muted-foreground italic mt-1">{t("app.tagline")}</p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Your Profile</CardTitle>
-            <CardDescription>Tell us about your condition so our clinical AI can build your plan.</CardDescription>
+            <CardTitle>{t("onboarding.profileTitle")}</CardTitle>
+            <CardDescription>{t("onboarding.profileDesc")}</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -107,7 +114,7 @@ export default function PatientOnboarding() {
                     name="age"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Age</FormLabel>
+                        <FormLabel>{t("onboarding.age")}</FormLabel>
                         <FormControl>
                           <Input type="number" {...field} />
                         </FormControl>
@@ -115,24 +122,24 @@ export default function PatientOnboarding() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="gender"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Gender</FormLabel>
+                        <FormLabel>{t("onboarding.gender")}</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select gender" />
+                              <SelectValue placeholder={t("onboarding.gender.placeholder")} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="female">Female</SelectItem>
-                            <SelectItem value="male">Male</SelectItem>
-                            <SelectItem value="nonbinary">Non-binary</SelectItem>
-                            <SelectItem value="prefer_not_to_say">Prefer not to say</SelectItem>
+                            <SelectItem value="female">{t("onboarding.gender.female")}</SelectItem>
+                            <SelectItem value="male">{t("onboarding.gender.male")}</SelectItem>
+                            <SelectItem value="nonbinary">{t("onboarding.gender.nonbinary")}</SelectItem>
+                            <SelectItem value="prefer_not_to_say">{t("onboarding.gender.prefer")}</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -146,11 +153,11 @@ export default function PatientOnboarding() {
                   name="conditionId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Primary Condition</FormLabel>
+                      <FormLabel>{t("onboarding.condition")}</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger disabled={conditionsLoading}>
-                            <SelectValue placeholder="Select your condition" />
+                            <SelectValue placeholder={t("onboarding.condition.placeholder")} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -171,12 +178,12 @@ export default function PatientOnboarding() {
                   name="symptoms"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Current Symptoms</FormLabel>
+                      <FormLabel>{t("onboarding.symptoms")}</FormLabel>
                       <FormControl>
-                        <Textarea 
-                          placeholder="Describe what you're feeling, when it started, and what makes it worse..." 
+                        <Textarea
+                          placeholder={t("onboarding.symptoms.placeholder")}
                           className="min-h-[100px]"
-                          {...field} 
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />
@@ -189,20 +196,20 @@ export default function PatientOnboarding() {
                   name="painLevel"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Current Pain Level: {field.value}/10</FormLabel>
+                      <FormLabel>{t("onboarding.painLevel")}: {field.value}/10</FormLabel>
                       <FormControl>
-                        <Slider 
-                          min={1} 
-                          max={10} 
-                          step={1} 
-                          value={[field.value]} 
+                        <Slider
+                          min={1}
+                          max={10}
+                          step={1}
+                          value={[field.value]}
                           onValueChange={(vals) => field.onChange(vals[0])}
                           className="py-4"
                         />
                       </FormControl>
                       <FormDescription className="flex justify-between">
-                        <span>Mild</span>
-                        <span>Severe</span>
+                        <span>{t("onboarding.painLevel.mild")}</span>
+                        <span>{t("onboarding.painLevel.severe")}</span>
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -214,11 +221,11 @@ export default function PatientOnboarding() {
                   name="medicalHistory"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Medical History (Optional)</FormLabel>
+                      <FormLabel>{t("onboarding.history")}</FormLabel>
                       <FormControl>
-                        <Textarea 
-                          placeholder="Any past surgeries, chronic conditions, or medications..." 
-                          {...field} 
+                        <Textarea
+                          placeholder={t("onboarding.history.placeholder")}
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />
@@ -227,7 +234,7 @@ export default function PatientOnboarding() {
                 />
 
                 <div className="space-y-2">
-                  <Label htmlFor="medical-report">Medical Report (Optional)</Label>
+                  <Label htmlFor="medical-report">{t("onboarding.report")}</Label>
                   <Input
                     id="medical-report"
                     type="file"
@@ -240,17 +247,17 @@ export default function PatientOnboarding() {
                       }
                     }}
                   />
-                  <p className="text-sm text-muted-foreground">Upload MRI, X-ray, or doctor's notes (PDF, JPG)</p>
+                  <p className="text-sm text-muted-foreground">{t("onboarding.report.help")}</p>
                 </div>
 
                 <Button type="submit" className="w-full" disabled={isSubmitting}>
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Generating Recovery Plan...
+                      {t("onboarding.generating")}
                     </>
                   ) : (
-                    "Complete Setup & Generate Plan"
+                    t("onboarding.submit")
                   )}
                 </Button>
               </form>

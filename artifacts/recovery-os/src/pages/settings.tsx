@@ -4,9 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { LogOut, User as UserIcon, Sparkles, Check } from "lucide-react";
+import { LogOut, User as UserIcon, Sparkles, Check, Globe } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { LanguageSelect } from "@/components/LanguageSelect";
+import { useT } from "@/lib/i18n";
 
 export default function Settings() {
   const { user, logout } = useAuth();
@@ -15,6 +17,7 @@ export default function Settings() {
   const updateSub = useUpdateMySubscription();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { t } = useT();
 
   const isPaid = sub?.tier === 'paid';
 
@@ -32,9 +35,22 @@ export default function Settings() {
   return (
     <div className="space-y-8 max-w-3xl mx-auto pb-10">
       <div>
-        <h1 className="font-serif text-3xl font-bold text-foreground">Settings</h1>
-        <p className="text-muted-foreground mt-1">Manage your account and preferences.</p>
+        <h1 className="font-serif text-3xl font-bold text-foreground">{t("settings.title")}</h1>
+        <p className="text-muted-foreground mt-1">{t("app.tagline")}</p>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Globe className="h-5 w-5 text-primary" />
+            {t("common.language")}
+          </CardTitle>
+          <CardDescription>{t("settings.preferences")}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <LanguageSelect />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -62,7 +78,7 @@ export default function Settings() {
         <CardFooter className="bg-muted/30 border-t mt-4 px-6 py-4">
           <Button variant="destructive" onClick={logout} className="w-full sm:w-auto">
             <LogOut className="h-4 w-4 mr-2" />
-            Sign Out
+            {t("common.signOut")}
           </Button>
         </CardFooter>
       </Card>
@@ -74,10 +90,10 @@ export default function Settings() {
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <Sparkles className={`h-5 w-5 ${isPaid ? 'text-primary' : 'text-muted-foreground'}`} />
-                  Subscription Plan
+                  {t("settings.subscription")}
                 </CardTitle>
                 <CardDescription className="mt-1">
-                  {isPaid ? "You are on the RecoveryOS Premium plan." : "Upgrade to unlock unlimited AI plan regenerations and chat."}
+                  {isPaid ? t("settings.subscription.paid") : t("settings.subscription.free")}
                 </CardDescription>
               </div>
               {isLoading ? (
