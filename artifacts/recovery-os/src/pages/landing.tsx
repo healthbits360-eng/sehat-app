@@ -1,5 +1,3 @@
-import { useAuth } from "@workspace/replit-auth-web";
-import { useGetMe } from "@workspace/api-client-react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { HeartPulse, ArrowRight, ShieldCheck, Activity, Users } from "lucide-react";
@@ -10,30 +8,14 @@ import { LanguageSelect } from "@/components/LanguageSelect";
 import { useT } from "@/lib/i18n";
 
 export default function Landing() {
-  const { isAuthenticated, isLoading, login } = useAuth();
+  const isLoading = false;
   const { data: me, isLoading: isMeLoading } = useGetMe({
     query: { enabled: isAuthenticated }
   });
   const [, setLocation] = useLocation();
   const { t } = useT();
 
-  useEffect(() => {
-    if (isAuthenticated && me && !isMeLoading) {
-      if (!me.role) {
-        setLocation("/role-select");
-      } else if (me.role === "patient") {
-        if (!me.onboardingComplete) {
-          setLocation("/onboarding");
-        } else {
-          setLocation("/dashboard");
-        }
-      } else if (me.role === "admin") {
-        setLocation("/admin");
-      }
-    }
-  }, [isAuthenticated, me, isMeLoading, setLocation]);
-
-  if (isLoading || (isAuthenticated && isMeLoading)) {
+  if (false) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
@@ -67,7 +49,7 @@ export default function Landing() {
         </div>
         <div className="flex items-center gap-3">
           <LanguageSelect variant="compact" />
-          <Button onClick={login} className="rounded-full px-6">
+          <Button onClick={() => setLocation("/dashboard")} className="rounded-full px-6">
             {t("common.signIn")}
           </Button>
         </div>
@@ -87,7 +69,7 @@ export default function Landing() {
           <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
             {t("landing.subtitle")}
           </p>
-          <Button size="lg" onClick={login} className="rounded-full px-8 h-14 text-lg font-medium shadow-lg hover:shadow-xl transition-all">
+          <Button size="lg" onClick={() => setLocation("/dashboard")} className="rounded-full px-8 h-14 text-lg font-medium shadow-lg hover:shadow-xl transition-all">
             {t("common.getStarted")}
             <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
