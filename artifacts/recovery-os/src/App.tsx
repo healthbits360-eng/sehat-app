@@ -1,11 +1,11 @@
-import { AppShell } from "./components/layout/AppShell";
 import { Switch, Route, Router as WouterRouter } from "wouter";
+
+import { AppShell } from "./components/layout/AppShell";
 
 import Landing from "./pages/landing";
 import RoleSelect from "./pages/role-select";
 import PatientDashboard from "./pages/patient-dashboard";
-
-import { AppShell } from "./components/layout/AppShell";
+import AdminDashboard from "./pages/admin-dashboard"; // 👈 NEW
 
 function Router() {
   return (
@@ -29,9 +29,17 @@ function Router() {
         </AppShell>
       </Route>
 
+      {/* 👇 NEW ADMIN ROUTE */}
+      <Route path="/admin-dashboard">
+        <AppShell>
+          <AdminDashboard />
+        </AppShell>
+      </Route>
+
     </Switch>
   );
 }
+
 export default function App() {
   return (
     <WouterRouter>
