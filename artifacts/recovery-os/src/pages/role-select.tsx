@@ -1,24 +1,39 @@
 import { useLocation } from "wouter";
 
 export default function RoleSelect() {
-  const [, navigate] = useLocation(); // 👈 STEP 3 (navigation function)
+  const [, navigate] = useLocation();
 
   return (
     <div style={{ padding: 40 }}>
-      <h1>Role Select Page ✅</h1>
-      <p>This page is working.</p>
+      <h1>Choose Your Role</h1>
+      <p>Select how you want to continue</p>
 
-      {/* 👇 STEP 4 (button added) */}
+      {/* Patient Button */}
       <button
         onClick={() => navigate("/dashboard")}
         style={{
+          display: "block",
           marginTop: 20,
-          padding: "10px 20px",
+          padding: "12px 24px",
           fontSize: 16,
           cursor: "pointer",
         }}
       >
-        Go to Dashboard
+        👤 I am Patient
+      </button>
+
+      {/* Admin Button */}
+      <button
+        onClick={() => navigate("/admin-dashboard")}
+        style={{
+          display: "block",
+          marginTop: 10,
+          padding: "12px 24px",
+          fontSize: 16,
+          cursor: "pointer",
+        }}
+      >
+        🧑‍⚕️ I am Admin
       </button>
     </div>
   );
