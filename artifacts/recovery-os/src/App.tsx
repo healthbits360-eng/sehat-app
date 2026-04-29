@@ -1,6 +1,5 @@
 import { Switch, Route, Router as WouterRouter } from "wouter";
-import NotFound from "@/pages/not-found";
-
+import NotFound from "./pages/not-found";
 import Landing from "./pages/landing";
 import RoleSelect from "./pages/role-select";
 import { AppShell } from "./components/layout/AppShell";
