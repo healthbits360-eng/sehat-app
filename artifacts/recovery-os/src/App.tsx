@@ -1,8 +1,4 @@
 import { Switch, Route, Router as WouterRouter } from "wouter";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { I18nProvider } from "@/lib/i18n";
 import NotFound from "@/pages/not-found";
 
 import Landing from "./pages/landing";
@@ -22,8 +18,6 @@ import AdminDashboard from "./pages/admin-dashboard";
 import AdminPatients from "./pages/admin-patients";
 import AdminPatientDetail from "./pages/admin-patient-detail";
 
-const queryClient = new QueryClient();
-
 function Router() {
   return (
     <Switch>
@@ -36,57 +30,57 @@ function Router() {
       </Route>
 
       <Route path="/onboarding">
-        <ProtectedRoute allowedRole="patient">
+        <ProtectedRoute>
           <PatientOnboarding />
         </ProtectedRoute>
       </Route>
 
       {/* Patient Routes */}
       <Route path="/dashboard">
-        <ProtectedRoute allowedRole="patient">
+        <ProtectedRoute>
           <AppShell><PatientDashboard /></AppShell>
         </ProtectedRoute>
       </Route>
       
       <Route path="/plan">
-        <ProtectedRoute allowedRole="patient">
+        <ProtectedRoute>
           <AppShell><PatientPlan /></AppShell>
         </ProtectedRoute>
       </Route>
       
       <Route path="/tracking">
-        <ProtectedRoute allowedRole="patient">
+        <ProtectedRoute>
           <AppShell><PatientTracking /></AppShell>
         </ProtectedRoute>
       </Route>
       
       <Route path="/chat">
-        <ProtectedRoute allowedRole="patient">
+        <ProtectedRoute>
           <AppShell><PatientChat /></AppShell>
         </ProtectedRoute>
       </Route>
 
       <Route path="/learn">
-        <ProtectedRoute allowedRole="patient">
+        <ProtectedRoute>
           <AppShell><Learn /></AppShell>
         </ProtectedRoute>
       </Route>
 
       {/* Admin Routes */}
       <Route path="/admin">
-        <ProtectedRoute allowedRole="admin">
+        <ProtectedRoute>
           <AppShell><AdminDashboard /></AppShell>
         </ProtectedRoute>
       </Route>
       
       <Route path="/admin/patients">
-        <ProtectedRoute allowedRole="admin">
+        <ProtectedRoute>
           <AppShell><AdminPatients /></AppShell>
         </ProtectedRoute>
       </Route>
       
       <Route path="/admin/patients/:patientId">
-        <ProtectedRoute allowedRole="admin">
+        <ProtectedRoute>
           <AppShell><AdminPatientDetail /></AppShell>
         </ProtectedRoute>
       </Route>
@@ -105,16 +99,9 @@ function Router() {
 
 function App() {
   return (
-    <I18nProvider>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-            <Router />
-          </WouterRouter>
-          <Toaster />
-        </TooltipProvider>
-      </QueryClientProvider>
-    </I18nProvider>
+    <WouterRouter>
+      <Router />
+    </WouterRouter>
   );
 }
 
