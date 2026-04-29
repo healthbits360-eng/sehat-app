@@ -1,3 +1,4 @@
+import { useLocation } from "wouter";
 export default function RoleSelect() {
   return (
     <div style={{ padding: 40 }}>
