@@ -1,3 +1,4 @@
+import { AppShell } from "./components/layout/AppShell";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 
 import Landing from "./pages/landing";
@@ -9,19 +10,28 @@ import { AppShell } from "./components/layout/AppShell";
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Landing} />
-      <Route path="/role-select" component={RoleSelect} />
 
-      {/* ✅ Wrap dashboard inside AppShell */}
+      <Route path="/">
+        <AppShell>
+          <Landing />
+        </AppShell>
+      </Route>
+
+      <Route path="/role-select">
+        <AppShell>
+          <RoleSelect />
+        </AppShell>
+      </Route>
+
       <Route path="/dashboard">
         <AppShell>
           <PatientDashboard />
         </AppShell>
       </Route>
+
     </Switch>
   );
 }
-
 export default function App() {
   return (
     <WouterRouter>
