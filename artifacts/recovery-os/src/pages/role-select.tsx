@@ -5,36 +5,23 @@ export default function RoleSelect() {
 
   return (
     <div style={{ padding: 40 }}>
-      <h1>Choose Your Role</h1>
-      <p>Select how you want to continue</p>
+      <h1>Select Your Role</h1>
 
-      {/* Patient Button */}
-      <button
-        onClick={() => navigate("/dashboard")}
-        style={{
-          display: "block",
-          marginTop: 20,
-          padding: "12px 24px",
-          fontSize: 16,
-          cursor: "pointer",
-        }}
-      >
-        👤 I am Patient
-      </button>
+      <div style={{ marginTop: 30 }}>
+        <button
+          onClick={() => navigate("/dashboard")}
+          style={{ padding: 10, marginRight: 10 }}
+        >
+          I am Patient
+        </button>
 
-      {/* Admin Button */}
-      <button
-        onClick={() => navigate("/admin-dashboard")}
-        style={{
-          display: "block",
-          marginTop: 10,
-          padding: "12px 24px",
-          fontSize: 16,
-          cursor: "pointer",
-        }}
-      >
-        🧑‍⚕️ I am Admin
-      </button>
+        <button
+          onClick={() => navigate("/admin-dashboard")}
+          style={{ padding: 10 }}
+        >
+          I am Physiotherapist
+        </button>
+      </div>
     </div>
   );
 }
