@@ -1,8 +1,19 @@
+import { Switch, Route, Router as WouterRouter } from "wouter";
+
+import Landing from "./pages/landing";
+
+function Router() {
+  return (
+    <Switch>
+      <Route path="/" component={Landing} />
+    </Switch>
+  );
+}
+
 export default function App() {
   return (
-    <div style={{ padding: 40 }}>
-      <h1>APP IS WORKING ✅</h1>
-      <p>If you see this, React is running fine.</p>
-    </div>
+    <WouterRouter>
+      <Router />
+    </WouterRouter>
   );
 }
