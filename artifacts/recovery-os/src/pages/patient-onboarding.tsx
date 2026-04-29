@@ -12,6 +12,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -225,23 +226,22 @@ export default function PatientOnboarding() {
                   )}
                 />
 
-                <FormItem>
-                  <FormLabel>Medical Report (Optional)</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="file" 
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          setReportFileName(file.name);
-                        } else {
-                          setReportFileName(null);
-                        }
-                      }} 
-                    />
-                  </FormControl>
-                  <FormDescription>Upload MRI, X-ray, or doctor's notes (PDF, JPG)</FormDescription>
-                </FormItem>
+                <div className="space-y-2">
+                  <Label htmlFor="medical-report">Medical Report (Optional)</Label>
+                  <Input
+                    id="medical-report"
+                    type="file"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setReportFileName(file.name);
+                      } else {
+                        setReportFileName(null);
+                      }
+                    }}
+                  />
+                  <p className="text-sm text-muted-foreground">Upload MRI, X-ray, or doctor's notes (PDF, JPG)</p>
+                </div>
 
                 <Button type="submit" className="w-full" disabled={isSubmitting}>
                   {isSubmitting ? (
