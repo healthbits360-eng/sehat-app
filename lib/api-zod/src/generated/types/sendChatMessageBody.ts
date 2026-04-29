@@ -5,6 +5,7 @@
  * RecoveryOS API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { SendChatMessageBodyLanguage } from "./sendChatMessageBodyLanguage";
 
 export interface SendChatMessageBody {
   /**
@@ -12,4 +13,6 @@ export interface SendChatMessageBody {
    * @maxLength 2000
    */
   content: string;
+  /** Preferred response language for the AI assistant. */
+  language?: SendChatMessageBodyLanguage;
 }

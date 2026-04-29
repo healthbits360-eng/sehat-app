@@ -6,7 +6,11 @@ import {
 } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { requireAuth } from "../middlewares/requireAuth";
-import { generatePlan, type PlanContent } from "../services/aiPlanGenerator";
+import { generatePlan, type PlanContent, type SupportedLanguage } from "../services/aiPlanGenerator";
+
+function pickLanguage(value: unknown): SupportedLanguage {
+  return value === "hi" ? "hi" : "en";
+}
 
 const router: IRouter = Router();
 
@@ -71,14 +75,21 @@ router.post(
       return;
     }
 
-    const content = await generatePlan({
-      conditionId: patient.conditionId,
-      age: patient.age,
-      gender: patient.gender,
-      symptoms: patient.symptoms,
-      painLevel: patient.painLevel,
-      medicalHistory: patient.medicalHistory,
-    });
+    const language = pickLanguage(
+      (req.body as { language?: unknown } | undefined)?.language,
+    );
+
+    const content = await generatePlan(
+      {
+        conditionId: patient.conditionId,
+        age: patient.age,
+        gender: patient.gender,
+        symptoms: patient.symptoms,
+        painLevel: patient.painLevel,
+        medicalHistory: patient.medicalHistory,
+      },
+      language,
+    );
 
     if (existing) {
       const [updated] = await db

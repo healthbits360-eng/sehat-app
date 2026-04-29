@@ -6,16 +6,18 @@ import { HeartPulse, Sparkles, RefreshCw, AlertTriangle, Shield, CheckCircle2 } 
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
+import { useT } from "@/lib/i18n";
 
 export default function PatientPlan() {
   const { data: plan, isLoading, error } = useGetMyRecoveryPlan();
   const generatePlan = useGenerateMyRecoveryPlan();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { language } = useT();
 
   const handleRegenerate = async () => {
     try {
-      await generatePlan.mutateAsync({});
+      await generatePlan.mutateAsync({ data: { language } });
       queryClient.invalidateQueries({ queryKey: getGetMyRecoveryPlanQueryKey() });
       toast({ title: "Plan regenerated successfully" });
     } catch (e: any) {

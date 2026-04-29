@@ -99,6 +99,7 @@ router.post(
             painLevel: patient.painLevel,
           }
         : null,
+      parsed.data.language ?? "en",
     );
 
     const [assistantRow] = await db

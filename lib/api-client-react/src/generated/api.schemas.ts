@@ -226,12 +226,41 @@ export interface ChatMessage {
   createdAt: string;
 }
 
+/**
+ * Preferred response language for the AI assistant.
+ */
+export type SendChatMessageBodyLanguage =
+  (typeof SendChatMessageBodyLanguage)[keyof typeof SendChatMessageBodyLanguage];
+
+export const SendChatMessageBodyLanguage = {
+  en: "en",
+  hi: "hi",
+} as const;
+
 export interface SendChatMessageBody {
   /**
    * @minLength 1
    * @maxLength 2000
    */
   content: string;
+  /** Preferred response language for the AI assistant. */
+  language?: SendChatMessageBodyLanguage;
+}
+
+/**
+ * Preferred language for the generated plan content.
+ */
+export type GeneratePlanBodyLanguage =
+  (typeof GeneratePlanBodyLanguage)[keyof typeof GeneratePlanBodyLanguage];
+
+export const GeneratePlanBodyLanguage = {
+  en: "en",
+  hi: "hi",
+} as const;
+
+export interface GeneratePlanBody {
+  /** Preferred language for the generated plan content. */
+  language?: GeneratePlanBodyLanguage;
 }
 
 export interface ChatExchange {

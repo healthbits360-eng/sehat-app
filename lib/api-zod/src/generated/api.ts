@@ -224,6 +224,13 @@ export const GetMyRecoveryPlanResponse = zod.object({
 /**
  * @summary Generate (or regenerate) an AI recovery plan from the patient profile
  */
+export const GenerateMyRecoveryPlanBody = zod.object({
+  language: zod
+    .enum(["en", "hi"])
+    .optional()
+    .describe("Preferred language for the generated plan content."),
+});
+
 export const GenerateMyRecoveryPlanResponse = zod.object({
   id: zod.string(),
   patientId: zod.string(),
@@ -374,6 +381,10 @@ export const sendMyChatMessageBodyContentMax = 2000;
 
 export const SendMyChatMessageBody = zod.object({
   content: zod.string().min(1).max(sendMyChatMessageBodyContentMax),
+  language: zod
+    .enum(["en", "hi"])
+    .optional()
+    .describe("Preferred response language for the AI assistant."),
 });
 
 export const SendMyChatMessageResponse = zod.object({

@@ -29,6 +29,7 @@ import type {
   CreateClinicianNoteBody,
   ErrorEnvelope,
   ForbiddenResponse,
+  GeneratePlanBody,
   HandleBrowserLoginCallbackParams,
   HealthStatus,
   ListAdminPatientsParams,
@@ -1058,11 +1059,14 @@ export const getGenerateMyRecoveryPlanUrl = () => {
 };
 
 export const generateMyRecoveryPlan = async (
+  generatePlanBody?: GeneratePlanBody,
   options?: RequestInit,
 ): Promise<RecoveryPlan> => {
   return customFetch<RecoveryPlan>(getGenerateMyRecoveryPlanUrl(), {
     ...options,
     method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(generatePlanBody),
   });
 };
 
@@ -1073,14 +1077,14 @@ export const getGenerateMyRecoveryPlanMutationOptions = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof generateMyRecoveryPlan>>,
     TError,
-    void,
+    { data: BodyType<GeneratePlanBody> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof generateMyRecoveryPlan>>,
   TError,
-  void,
+  { data: BodyType<GeneratePlanBody> },
   TContext
 > => {
   const mutationKey = ["generateMyRecoveryPlan"];
@@ -1094,9 +1098,11 @@ export const getGenerateMyRecoveryPlanMutationOptions = <
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof generateMyRecoveryPlan>>,
-    void
-  > = () => {
-    return generateMyRecoveryPlan(requestOptions);
+    { data: BodyType<GeneratePlanBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return generateMyRecoveryPlan(data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -1105,7 +1111,7 @@ export const getGenerateMyRecoveryPlanMutationOptions = <
 export type GenerateMyRecoveryPlanMutationResult = NonNullable<
   Awaited<ReturnType<typeof generateMyRecoveryPlan>>
 >;
-
+export type GenerateMyRecoveryPlanMutationBody = BodyType<GeneratePlanBody>;
 export type GenerateMyRecoveryPlanMutationError = ErrorType<
   UnauthorizedResponse | ErrorEnvelope
 >;
@@ -1120,14 +1126,14 @@ export const useGenerateMyRecoveryPlan = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof generateMyRecoveryPlan>>,
     TError,
-    void,
+    { data: BodyType<GeneratePlanBody> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationResult<
   Awaited<ReturnType<typeof generateMyRecoveryPlan>>,
   TError,
-  void,
+  { data: BodyType<GeneratePlanBody> },
   TContext
 > => {
   return useMutation(getGenerateMyRecoveryPlanMutationOptions(options));

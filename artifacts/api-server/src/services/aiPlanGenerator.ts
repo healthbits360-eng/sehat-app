@@ -2,6 +2,8 @@ import { openai } from "@workspace/integrations-openai-ai-server";
 import { logger } from "../lib/logger";
 import { getConditionLabel } from "../lib/conditions";
 
+export type SupportedLanguage = "en" | "hi";
+
 export interface PlanInput {
   conditionId: string;
   age: number;
@@ -10,6 +12,18 @@ export interface PlanInput {
   painLevel: number;
   medicalHistory: string;
 }
+
+const HINDI_PLAN_INSTRUCTIONS = `IMPORTANT: Write ALL string values (summary, exercise names, instructions, lifestyle tips, precautions, day focus, and activities) in SIMPLE conversational Hindi using Latin script (Hinglish), like an everyday WhatsApp message.
+- Use easy words: "dard" (pain), "saans lena" (breathing), "aasan vyayam" (easy exercise), "aaram" (rest), "paani" (water), "neend" (sleep), "chalna" (walking), "halka" (light/gentle).
+- Keep sentences SHORT and clear. No medical jargon. No Sanskrit.
+- "day" field MUST stay in English ("Monday", "Tuesday", etc.) — only translate "focus" and "activities".
+- Numbers (sets, reps, durationMinutes) stay as numbers.
+Example summary: "Aapke liye yeh 7 din ka aasan plan hai. Roz thoda chalna, halki vyayam aur achhi neend zaruri hai. Dard badhe to ruk jaayein."`;
+
+const HINDI_CHAT_INSTRUCTIONS = `IMPORTANT: Reply in SIMPLE conversational Hindi using Latin script (Hinglish), like an everyday WhatsApp message.
+- Use easy everyday words: "dard", "saans", "aaram", "paani", "neend", "halka vyayam".
+- Keep sentences short. 2-4 sentences total. No medical jargon, no Sanskrit.
+- Be warm and encouraging. Example: "Aapka dard kam ho raha hai, yeh achhi baat hai. Aaj halki walk karein aur paani peete rahein."`;
 
 export interface PlanContent {
   summary: string;
@@ -116,8 +130,92 @@ function isPlanContent(value: unknown): value is PlanContent {
   );
 }
 
-export async function generatePlan(input: PlanInput): Promise<PlanContent> {
+const FALLBACK_HI: PlanContent = {
+  summary:
+    "Yeh ek halka aur sahaj recovery plan hai. Roz thoda chalna, aasan vyayam aur achhi neend par dhyan dein. Dard badhe to ruk jaayein aur aaram karein.",
+  exercises: [
+    {
+      name: "Gehri saans (Diaphragmatic breathing)",
+      sets: 2,
+      reps: 10,
+      durationMinutes: 5,
+      instructions:
+        "Aaram se letein, ek haath pet par rakhein. Naak se 4 ginti tak saans lein, phir 6 ginti tak chhodein. Yeh dard kam karne mein madad karta hai.",
+    },
+    {
+      name: "Halki mobility flow",
+      sets: 2,
+      reps: 8,
+      durationMinutes: 8,
+      instructions:
+        "Apne sharir ko dheere-dheere ghoomayein, sirf utna jitna bina dard ke ho. Tej dard ho to ruk jaayein.",
+    },
+    {
+      name: "Chalna",
+      sets: 1,
+      reps: 1,
+      durationMinutes: 15,
+      instructions:
+        "Samtal jagah par aaram se chalein. Saans normal rakhein aur seedha khade rahein.",
+    },
+  ],
+  lifestyleTips: [
+    "Roz 7-9 ghante ki neend lein — recovery raat ko hoti hai.",
+    "Din bhar paani peete rahein; kam paani se dard badh sakta hai.",
+    "Akadan ke liye garam, sujan ke liye thanda 10-15 minute lagayein.",
+    "Har ghante mein thoda uthkar movement karein.",
+  ],
+  precautions: [
+    "Tej ya chubhne wala dard ho to vyayam turant rok dein.",
+    "Agar dard 7/10 se zyada 48 ghante tak rahe to doctor se baat karein.",
+    "Aaram ke din mat chhodein — woh bhi plan ka hissa hain.",
+  ],
+  weeklyPlan: [
+    {
+      day: "Monday",
+      focus: "Mobility aur saans",
+      activities: ["Gehri saans", "Halki mobility flow", "10 min walk"],
+    },
+    {
+      day: "Tuesday",
+      focus: "Halki strength",
+      activities: ["Mobility flow", "Bodyweight strength circuit"],
+    },
+    {
+      day: "Wednesday",
+      focus: "Active recovery",
+      activities: ["20 min walk", "Stretching"],
+    },
+    {
+      day: "Thursday",
+      focus: "Strength aur balance",
+      activities: ["Mobility flow", "Balance work", "Strength circuit"],
+    },
+    {
+      day: "Friday",
+      focus: "Cardio aur saans",
+      activities: ["20 min walk", "Saans ki practice"],
+    },
+    {
+      day: "Saturday",
+      focus: "Lambi movement",
+      activities: ["30 min walk ya swim", "Stretching"],
+    },
+    {
+      day: "Sunday",
+      focus: "Aaram aur sochna",
+      activities: ["Halki stretching", "Hafte ke baare mein sochein"],
+    },
+  ],
+};
+
+export async function generatePlan(
+  input: PlanInput,
+  language: SupportedLanguage = "en",
+): Promise<PlanContent> {
   const condition = getConditionLabel(input.conditionId);
+  const fallback = language === "hi" ? FALLBACK_HI : FALLBACK;
+  const languageBlock = language === "hi" ? `\n\n${HINDI_PLAN_INSTRUCTIONS}` : "";
   const prompt = `You are a senior physiotherapist designing a 7-day recovery plan.
 
 Patient profile:
@@ -145,7 +243,7 @@ Rules:
 - Calibrate intensity to the pain level (lower pain = more challenge).
 - Respect medical history (skip contraindicated movements).
 - Keep instructions actionable and one paragraph max.
-- Never recommend medication or diagnosis.`;
+- Never recommend medication or diagnosis.${languageBlock}`;
 
   try {
     const completion = await openai.chat.completions.create({
@@ -164,15 +262,15 @@ Rules:
     const raw = completion.choices[0]?.message?.content ?? "";
     const parsed = JSON.parse(raw) as unknown;
     if (isPlanContent(parsed)) return parsed;
-    logger.warn({ raw }, "AI plan output failed shape check, using fallback");
-    return FALLBACK;
+    logger.warn({ raw, language }, "AI plan output failed shape check, using fallback");
+    return fallback;
   } catch (err) {
-    logger.error({ err }, "Failed to generate AI plan, using fallback");
-    return FALLBACK;
+    logger.error({ err, language }, "Failed to generate AI plan, using fallback");
+    return fallback;
   }
 }
 
-const SYSTEM_CHAT_PROMPT = `You are a calm, encouraging recovery assistant for the RecoveryOS app.
+const SYSTEM_CHAT_PROMPT = `You are a calm, encouraging recovery assistant for the Sehat app.
 - Patients use you to ask about their plan, pain, exercises, and general wellbeing.
 - Keep replies short (2-5 sentences) and warm.
 - You are NOT a doctor. For red flags (chest pain, numbness, fainting, fever) tell them to seek urgent care.
@@ -182,14 +280,25 @@ const SYSTEM_CHAT_PROMPT = `You are a calm, encouraging recovery assistant for t
 export async function generateChatReply(
   history: Array<{ role: "user" | "assistant"; content: string }>,
   context: { conditionLabel: string; painLevel: number } | null,
+  language: SupportedLanguage = "en",
 ): Promise<string> {
+  const fallback =
+    language === "hi"
+      ? "Abhi soch nahi pa raha hoon — thodi der mein phir se bhejein."
+      : "I'm having a hard time thinking right now — please try sending that again in a moment.";
+  const empty =
+    language === "hi"
+      ? "Main yahan hoon. Thoda aur bataiye, kaisa lag raha hai?"
+      : "I'm here. Could you share a little more about how you're feeling?";
+
   try {
     const messages: Array<{
       role: "system" | "user" | "assistant";
       content: string;
-    }> = [
-      { role: "system", content: SYSTEM_CHAT_PROMPT },
-    ];
+    }> = [{ role: "system", content: SYSTEM_CHAT_PROMPT }];
+    if (language === "hi") {
+      messages.push({ role: "system", content: HINDI_CHAT_INSTRUCTIONS });
+    }
     if (context) {
       messages.push({
         role: "system",
@@ -203,12 +312,9 @@ export async function generateChatReply(
       max_completion_tokens: 600,
       messages,
     });
-    return (
-      completion.choices[0]?.message?.content?.trim() ||
-      "I'm here. Could you share a little more about how you're feeling?"
-    );
+    return completion.choices[0]?.message?.content?.trim() || empty;
   } catch (err) {
-    logger.error({ err }, "Chat reply generation failed");
-    return "I'm having a hard time thinking right now — please try sending that again in a moment.";
+    logger.error({ err, language }, "Chat reply generation failed");
+    return fallback;
   }
 }

@@ -10,6 +10,7 @@ import { useAuth } from "@workspace/replit-auth-web";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
+import { useT } from "@/lib/i18n";
 
 export default function PatientChat() {
   const { user } = useAuth();
@@ -17,6 +18,7 @@ export default function PatientChat() {
   const sendMessage = useSendMyChatMessage();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { language } = useT();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [input, setInput] = useState("");
 
@@ -34,7 +36,7 @@ export default function PatientChat() {
     setInput("");
 
     try {
-      await sendMessage.mutateAsync({ data: { content } });
+      await sendMessage.mutateAsync({ data: { content, language } });
       queryClient.invalidateQueries({ queryKey: getListMyChatMessagesQueryKey() });
     } catch (e: any) {
       if (e?.status === 402) {

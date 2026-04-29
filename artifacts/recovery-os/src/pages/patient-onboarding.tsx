@@ -39,7 +39,7 @@ export default function PatientOnboarding() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [reportFileName, setReportFileName] = useState<string | null>(null);
-  const { t } = useT();
+  const { t, language } = useT();
   
   const { data: conditions, isLoading: conditionsLoading } = useListConditions();
   const submitOnboarding = useSubmitOnboarding();
@@ -71,7 +71,7 @@ export default function PatientOnboarding() {
         description: t("onboarding.generatingDesc"),
       });
 
-      await generatePlan.mutateAsync({});
+      await generatePlan.mutateAsync({ data: { language } });
 
       queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
       setLocation("/dashboard");

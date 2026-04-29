@@ -256,6 +256,12 @@ paths:
       tags: [Plan]
       operationId: generateMyRecoveryPlan
       summary: Generate (or regenerate) an AI recovery plan from the patient profile
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GeneratePlanBody'
       responses:
         '200':
           description: New recovery plan
@@ -943,6 +949,18 @@ components:
           type: string
           minLength: 1
           maxLength: 2000
+        language:
+          type: string
+          enum: [en, hi]
+          description: Preferred response language for the AI assistant.
+
+    GeneratePlanBody:
+      type: object
+      properties:
+        language:
+          type: string
+          enum: [en, hi]
+          description: Preferred language for the generated plan content.
 
     ChatExchange:
       type: object
