@@ -12,10 +12,8 @@ function Router() {
 
       {/* ADD THIS */}
       <Route path="/dashboard">
-        <div style={{ padding: 40, fontSize: 24 }}>
-          Dashboard DIRECT ✅
-        </div>
-      </Route>
+  <PatientDashboard />
+</Route>
 
     </Switch>
   );
