@@ -1,3 +1,7 @@
 export default function PatientDashboard() {
-  return <h1>Dashboard WORKING ✅</h1>;
+  return (
+    <div style={{ padding: "40px", fontSize: "24px" }}>
+      Dashboard WORKING ✅
+    </div>
+  );
 }
