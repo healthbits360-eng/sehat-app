@@ -13,17 +13,24 @@ export interface PlanInput {
   medicalHistory: string;
 }
 
-const HINDI_PLAN_INSTRUCTIONS = `IMPORTANT: Write ALL string values (summary, exercise names, instructions, lifestyle tips, precautions, day focus, and activities) in SIMPLE conversational Hindi using Latin script (Hinglish), like an everyday WhatsApp message.
-- Use easy words: "dard" (pain), "saans lena" (breathing), "aasan vyayam" (easy exercise), "aaram" (rest), "paani" (water), "neend" (sleep), "chalna" (walking), "halka" (light/gentle).
-- Keep sentences SHORT and clear. No medical jargon. No Sanskrit.
-- "day" field MUST stay in English ("Monday", "Tuesday", etc.) — only translate "focus" and "activities".
-- Numbers (sets, reps, durationMinutes) stay as numbers.
-Example summary: "Aapke liye yeh 7 din ka aasan plan hai. Roz thoda chalna, halki vyayam aur achhi neend zaruri hai. Dard badhe to ruk jaayein."`;
+const HINDI_PLAN_INSTRUCTIONS = `STRICT LANGUAGE RULE — RESPOND ONLY IN SIMPLE HINDI. DO NOT USE ENGLISH.
+- Every string value (summary, exercise names, instructions, lifestyle tips, precautions, weekly focus, activities) MUST be written in simple Hindi using Latin script (Hinglish), the way a rural patient with no English background would speak.
+- Use very easy everyday words like: "dard" (pain), "saans lena" (breathing), "aasan vyayam" (easy exercise), "aaram" (rest), "paani" (water), "neend" (sleep), "chalna" (walking), "halka" (light/gentle), "garam paani" (warm water), "thoda" (a little), "roz" (daily).
+- Keep sentences SHORT and CLEAR. Avoid ALL technical medical terms. No Sanskrit. No English words except where unavoidable (like "minute" or proper nouns).
+- ONLY two exceptions, which MUST stay in English: the "day" field values ("Monday".."Sunday"), and numeric fields (sets, reps, durationMinutes).
+- DO NOT mix English sentences with Hindi. If you write any English sentence in a value field, your output will be REJECTED.
+Example summary (this is the style required): "Aapke liye yeh 7 din ka aasan plan hai. Roz thoda chalna, halki vyayam aur achhi neend zaruri hai. Dard badhe to ruk jaayein aur aaram karein."`;
 
-const HINDI_CHAT_INSTRUCTIONS = `IMPORTANT: Reply in SIMPLE conversational Hindi using Latin script (Hinglish), like an everyday WhatsApp message.
-- Use easy everyday words: "dard", "saans", "aaram", "paani", "neend", "halka vyayam".
-- Keep sentences short. 2-4 sentences total. No medical jargon, no Sanskrit.
-- Be warm and encouraging. Example: "Aapka dard kam ho raha hai, yeh achhi baat hai. Aaj halki walk karein aur paani peete rahein."`;
+const HINDI_CHAT_INSTRUCTIONS = `STRICT LANGUAGE RULE — RESPOND ONLY IN SIMPLE HINDI. DO NOT USE ENGLISH.
+- Reply in simple Hindi using Latin script (Hinglish), the way a rural user with no English background would speak.
+- Use very easy everyday words: "dard", "saans", "aaram", "paani", "neend", "halka vyayam", "garam paani", "thoda", "roz".
+- Short sentences. 2-4 sentences total. No technical medical terms. No Sanskrit. No English.
+- Warm and encouraging. Example: "Aapka dard kam ho raha hai, yeh achhi baat hai. Aaj halki walk karein aur paani peete rahein."`;
+
+const HINDI_SYSTEM_GUARD =
+  "You are a Hindi-only assistant. The user has set their language to Hindi. " +
+  "EVERY user-visible string MUST be in simple Latin-script Hindi (Hinglish). " +
+  "Never reply in English. Never mix in English sentences.";
 
 export interface PlanContent {
   summary: string;
@@ -246,15 +253,83 @@ Rules:
 - Never recommend medication or diagnosis.${languageBlock}`;
 
   try {
+    const systemMessages: Array<{ role: "system"; content: string }> = [
+      {
+        role: "system",
+        content:
+          "You produce structured JSON recovery plans. Output only valid JSON, no commentary.",
+      },
+    ];
+    if (language === "hi") {
+      systemMessages.push({ role: "system", content: HINDI_SYSTEM_GUARD });
+    }
+    const completion = await openai.chat.completions.create({
+      model: "gpt-5.4",
+      max_completion_tokens: 4096,
+      response_format: { type: "json_object" },
+      messages: [...systemMessages, { role: "user", content: prompt }],
+    });
+    const raw = completion.choices[0]?.message?.content ?? "";
+    const parsed = JSON.parse(raw) as unknown;
+    if (!isPlanContent(parsed)) {
+      logger.warn({ raw, language }, "AI plan output failed shape check, using fallback");
+      return fallback;
+    }
+    if (language === "hi" && planLooksEnglish(parsed)) {
+      logger.warn({ language }, "Hindi plan output still contains English, translating");
+      const translated = await translatePlanToHindi(parsed);
+      return translated ?? fallback;
+    }
+    return parsed;
+  } catch (err) {
+    logger.error({ err, language }, "Failed to generate AI plan, using fallback");
+    return fallback;
+  }
+}
+
+const ENGLISH_MARKERS = /\b(the|and|with|your|please|exercise|breathing|recovery|pain|minutes|seconds|sets|reps|daily|weekly|focus|gentle|strength|mobility|walking|stretching|posture|patient|rest|water|sleep|hours|times|repeat|hold|days?|week|level|movement|activity|activities|tip|tips|precaution|safe|safely|comfortable|advised|recommend|recommended|please|consult|doctor|do not|don't|avoid|caution|important|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/gi;
+
+function isEnglishHeavy(text: string): boolean {
+  if (!text) return false;
+  const matches = text.match(ENGLISH_MARKERS);
+  return (matches?.length ?? 0) >= 3;
+}
+
+function planLooksEnglish(plan: PlanContent): boolean {
+  // Concatenate all user-visible strings except day names (which must stay English).
+  const parts: string[] = [
+    plan.summary,
+    ...plan.exercises.flatMap((e) => [e.name, e.instructions]),
+    ...plan.lifestyleTips,
+    ...plan.precautions,
+    ...plan.weeklyPlan.flatMap((d) => [d.focus, ...d.activities]),
+  ];
+  return isEnglishHeavy(parts.join(" \n "));
+}
+
+async function translatePlanToHindi(plan: PlanContent): Promise<PlanContent | null> {
+  const prompt = `Translate every string value in this JSON recovery plan into SIMPLE Latin-script Hindi (Hinglish) that a rural patient can understand. Use easy words like "dard", "saans", "aaram", "paani", "neend", "halka vyayam", "thoda", "roz". Keep sentences short. No technical medical terms. No Sanskrit.
+
+STRICT RULES:
+- Output ONLY the JSON object, same shape as input.
+- The "day" field values MUST stay in English ("Monday".."Sunday").
+- Numbers (sets, reps, durationMinutes) MUST stay numeric and unchanged.
+- Translate everything else: summary, exercise name, exercise instructions, lifestyleTips, precautions, weekly focus, weekly activities.
+
+Input JSON:
+${JSON.stringify(plan)}`;
+
+  try {
     const completion = await openai.chat.completions.create({
       model: "gpt-5.4",
       max_completion_tokens: 4096,
       response_format: { type: "json_object" },
       messages: [
+        { role: "system", content: HINDI_SYSTEM_GUARD },
         {
           role: "system",
           content:
-            "You produce structured JSON recovery plans. Output only valid JSON, no commentary.",
+            "You translate JSON content into simple Hindi while preserving the JSON shape exactly. Output ONLY valid JSON.",
         },
         { role: "user", content: prompt },
       ],
@@ -262,11 +337,10 @@ Rules:
     const raw = completion.choices[0]?.message?.content ?? "";
     const parsed = JSON.parse(raw) as unknown;
     if (isPlanContent(parsed)) return parsed;
-    logger.warn({ raw, language }, "AI plan output failed shape check, using fallback");
-    return fallback;
+    return null;
   } catch (err) {
-    logger.error({ err, language }, "Failed to generate AI plan, using fallback");
-    return fallback;
+    logger.error({ err }, "Hindi translation pass failed");
+    return null;
   }
 }
 
@@ -297,6 +371,7 @@ export async function generateChatReply(
       content: string;
     }> = [{ role: "system", content: SYSTEM_CHAT_PROMPT }];
     if (language === "hi") {
+      messages.push({ role: "system", content: HINDI_SYSTEM_GUARD });
       messages.push({ role: "system", content: HINDI_CHAT_INSTRUCTIONS });
     }
     if (context) {
@@ -312,9 +387,40 @@ export async function generateChatReply(
       max_completion_tokens: 600,
       messages,
     });
-    return completion.choices[0]?.message?.content?.trim() || empty;
+    let reply = completion.choices[0]?.message?.content?.trim() || empty;
+
+    if (language === "hi" && isEnglishHeavy(reply)) {
+      logger.warn({ language }, "Hindi chat reply contains English, translating");
+      const translated = await translateTextToHindi(reply);
+      if (translated) reply = translated;
+    }
+
+    return reply;
   } catch (err) {
     logger.error({ err, language }, "Chat reply generation failed");
     return fallback;
+  }
+}
+
+async function translateTextToHindi(text: string): Promise<string | null> {
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-5.4",
+      max_completion_tokens: 600,
+      messages: [
+        { role: "system", content: HINDI_SYSTEM_GUARD },
+        {
+          role: "system",
+          content:
+            "Translate the user's message into simple Latin-script Hindi (Hinglish). Use easy everyday words like dard, saans, aaram, paani, neend. Keep it short and warm. Output ONLY the translated text, nothing else.",
+        },
+        { role: "user", content: text },
+      ],
+    });
+    const out = completion.choices[0]?.message?.content?.trim();
+    return out || null;
+  } catch (err) {
+    logger.error({ err }, "Hindi text translation failed");
+    return null;
   }
 }
