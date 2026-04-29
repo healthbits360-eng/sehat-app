@@ -11,8 +11,12 @@ function Router() {
       <Route path="/role-select" component={RoleSelect} />
 
       {/* ADD THIS */}
-      <Route path="/dashboard">
-  <PatientDashboard />
+      import { AppShell } from "./components/layout/AppShell";  // add this at top
+
+<Route path="/dashboard">
+  <AppShell>
+    <PatientDashboard />
+  </AppShell>
 </Route>
 
     </Switch>
