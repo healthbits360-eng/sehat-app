@@ -1,14 +1,18 @@
+import { useState } from "react";
 import { useGetMyRecoveryPlan, useGenerateMyRecoveryPlan, getGetMyRecoveryPlanQueryKey } from "@workspace/api-client-react";
+import type { Exercise } from "@workspace/api-client-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { HeartPulse, Sparkles, RefreshCw, AlertTriangle, Shield, CheckCircle2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { HeartPulse, Sparkles, RefreshCw, AlertTriangle, Shield, CheckCircle2, PlayCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { useT } from "@/lib/i18n";
 
 export default function PatientPlan() {
+  const [activeExercise, setActiveExercise] = useState<Exercise | null>(null);
   const { data: plan, isLoading, error } = useGetMyRecoveryPlan();
   const generatePlan = useGenerateMyRecoveryPlan();
   const queryClient = useQueryClient();
@@ -86,17 +90,32 @@ export default function PatientPlan() {
         <div className="space-y-8">
           <section>
             <h2 className="text-xl font-serif font-semibold mb-4 flex items-center gap-2">
-              <Activity className="h-5 w-5 text-primary" /> Recommended Exercises
+              <Activity className="h-5 w-5 text-primary" /> {language === "hi" ? "Vyayam" : "Recommended Exercises"}
             </h2>
             <div className="space-y-4">
               {content.exercises.map((ex, i) => (
-                <Card key={i}>
+                <Card key={i} data-testid={`exercise-card-${i}`}>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-base">{ex.name}</CardTitle>
                     <CardDescription>{ex.sets} sets × {ex.reps} reps • {ex.durationMinutes} min</CardDescription>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="space-y-3">
                     <p className="text-sm text-muted-foreground">{ex.instructions}</p>
+                    {(ex.videoUrl || (ex.steps && ex.steps.length > 0)) && (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        className="w-full sm:w-auto"
+                        onClick={() => setActiveExercise(ex)}
+                        data-testid={`button-watch-exercise-${i}`}
+                      >
+                        <PlayCircle className="h-4 w-4 mr-2" />
+                        {ex.videoUrl
+                          ? language === "hi" ? "Vyayam dekhein" : "Watch Exercise"
+                          : language === "hi" ? "Steps dekhein" : "View Steps"}
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               ))}
@@ -139,8 +158,48 @@ export default function PatientPlan() {
         </div>
       </div>
 
+      <Dialog open={!!activeExercise} onOpenChange={(open) => !open && setActiveExercise(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="dialog-exercise">
+          {activeExercise && (
+            <>
+              <DialogHeader>
+                <DialogTitle>{activeExercise.name}</DialogTitle>
+                <DialogDescription>
+                  {activeExercise.sets} sets × {activeExercise.reps} reps • {activeExercise.durationMinutes} min
+                </DialogDescription>
+              </DialogHeader>
+              {activeExercise.videoUrl && (
+                <div className="relative w-full overflow-hidden rounded-md bg-black" style={{ paddingBottom: "56.25%" }}>
+                  <iframe
+                    src={activeExercise.videoUrl}
+                    title={activeExercise.name}
+                    className="absolute inset-0 h-full w-full"
+                    frameBorder={0}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
+              )}
+              {activeExercise.steps && activeExercise.steps.length > 0 && (
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-sm">{language === "hi" ? "Tarike" : "Steps"}</h3>
+                  <ol className="list-decimal pl-5 space-y-1 text-sm text-muted-foreground">
+                    {activeExercise.steps.map((step, i) => (
+                      <li key={i}>{step}</li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+              {activeExercise.instructions && (
+                <p className="text-xs text-muted-foreground border-t pt-3">{activeExercise.instructions}</p>
+              )}
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
       <section>
-        <h2 className="text-xl font-serif font-semibold mb-4">Weekly Schedule</h2>
+        <h2 className="text-xl font-serif font-semibold mb-4">{language === "hi" ? "Saaptahik Plan" : "Weekly Schedule"}</h2>
         <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
           {content.weeklyPlan.map((day, i) => (
             <Card key={i} className="bg-muted/30">

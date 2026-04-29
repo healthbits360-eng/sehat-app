@@ -136,6 +136,12 @@ export interface Exercise {
   reps: number;
   durationMinutes: number;
   instructions: string;
+  /** Optional embedded video URL (e.g. YouTube embed) for the exercise. */
+  videoUrl?: string;
+  /** Optional GIF demo URL for the exercise. */
+  gifUrl?: string;
+  /** Optional ordered steps to perform the exercise. */
+  steps?: string[];
 }
 
 export interface WeeklyDay {

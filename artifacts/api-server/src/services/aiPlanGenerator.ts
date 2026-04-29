@@ -1,6 +1,7 @@
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { logger } from "../lib/logger";
 import { getConditionLabel } from "../lib/conditions";
+import { findExerciseEnrichment } from "../lib/exerciseLibrary";
 
 export type SupportedLanguage = "en" | "hi";
 
@@ -40,10 +41,27 @@ export interface PlanContent {
     reps: number;
     durationMinutes: number;
     instructions: string;
+    videoUrl?: string;
+    gifUrl?: string;
+    steps?: string[];
   }>;
   lifestyleTips: string[];
   precautions: string[];
   weeklyPlan: Array<{ day: string; focus: string; activities: string[] }>;
+}
+
+function enrichExercises(plan: PlanContent, language: SupportedLanguage): PlanContent {
+  return {
+    ...plan,
+    exercises: plan.exercises.map((ex) => {
+      const enrichment = findExerciseEnrichment(ex.name, language);
+      return {
+        ...ex,
+        videoUrl: ex.videoUrl ?? enrichment.videoUrl,
+        steps: ex.steps && ex.steps.length > 0 ? ex.steps : enrichment.steps,
+      };
+    }),
+  };
 }
 
 const FALLBACK: PlanContent = {
@@ -273,17 +291,18 @@ Rules:
     const parsed = JSON.parse(raw) as unknown;
     if (!isPlanContent(parsed)) {
       logger.warn({ raw, language }, "AI plan output failed shape check, using fallback");
-      return fallback;
+      return enrichExercises(fallback, language);
     }
+    let result = parsed;
     if (language === "hi" && planLooksEnglish(parsed)) {
       logger.warn({ language }, "Hindi plan output still contains English, translating");
       const translated = await translatePlanToHindi(parsed);
-      return translated ?? fallback;
+      result = translated ?? fallback;
     }
-    return parsed;
+    return enrichExercises(result, language);
   } catch (err) {
     logger.error({ err, language }, "Failed to generate AI plan, using fallback");
-    return fallback;
+    return enrichExercises(fallback, language);
   }
 }
 

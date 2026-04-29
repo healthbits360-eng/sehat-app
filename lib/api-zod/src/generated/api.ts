@@ -204,6 +204,20 @@ export const GetMyRecoveryPlanResponse = zod.object({
         reps: zod.number(),
         durationMinutes: zod.number(),
         instructions: zod.string(),
+        videoUrl: zod
+          .string()
+          .optional()
+          .describe(
+            "Optional embedded video URL (e.g. YouTube embed) for the exercise.",
+          ),
+        gifUrl: zod
+          .string()
+          .optional()
+          .describe("Optional GIF demo URL for the exercise."),
+        steps: zod
+          .array(zod.string())
+          .optional()
+          .describe("Optional ordered steps to perform the exercise."),
       }),
     ),
     lifestyleTips: zod.array(zod.string()),
@@ -243,6 +257,20 @@ export const GenerateMyRecoveryPlanResponse = zod.object({
         reps: zod.number(),
         durationMinutes: zod.number(),
         instructions: zod.string(),
+        videoUrl: zod
+          .string()
+          .optional()
+          .describe(
+            "Optional embedded video URL (e.g. YouTube embed) for the exercise.",
+          ),
+        gifUrl: zod
+          .string()
+          .optional()
+          .describe("Optional GIF demo URL for the exercise."),
+        steps: zod
+          .array(zod.string())
+          .optional()
+          .describe("Optional ordered steps to perform the exercise."),
       }),
     ),
     lifestyleTips: zod.array(zod.string()),
@@ -356,6 +384,20 @@ export const GetMyDashboardResponse = zod.object({
       reps: zod.number(),
       durationMinutes: zod.number(),
       instructions: zod.string(),
+      videoUrl: zod
+        .string()
+        .optional()
+        .describe(
+          "Optional embedded video URL (e.g. YouTube embed) for the exercise.",
+        ),
+      gifUrl: zod
+        .string()
+        .optional()
+        .describe("Optional GIF demo URL for the exercise."),
+      steps: zod
+        .array(zod.string())
+        .optional()
+        .describe("Optional ordered steps to perform the exercise."),
     }),
   ),
   nextActions: zod.array(zod.string()),
@@ -519,6 +561,20 @@ export const GetAdminPatientResponse = zod.object({
             reps: zod.number(),
             durationMinutes: zod.number(),
             instructions: zod.string(),
+            videoUrl: zod
+              .string()
+              .optional()
+              .describe(
+                "Optional embedded video URL (e.g. YouTube embed) for the exercise.",
+              ),
+            gifUrl: zod
+              .string()
+              .optional()
+              .describe("Optional GIF demo URL for the exercise."),
+            steps: zod
+              .array(zod.string())
+              .optional()
+              .describe("Optional ordered steps to perform the exercise."),
           }),
         ),
         lifestyleTips: zod.array(zod.string()),
@@ -578,6 +634,20 @@ export const UpdateAdminPatientPlanBody = zod.object({
       reps: zod.number(),
       durationMinutes: zod.number(),
       instructions: zod.string(),
+      videoUrl: zod
+        .string()
+        .optional()
+        .describe(
+          "Optional embedded video URL (e.g. YouTube embed) for the exercise.",
+        ),
+      gifUrl: zod
+        .string()
+        .optional()
+        .describe("Optional GIF demo URL for the exercise."),
+      steps: zod
+        .array(zod.string())
+        .optional()
+        .describe("Optional ordered steps to perform the exercise."),
     }),
   ),
   lifestyleTips: zod.array(zod.string()),
@@ -603,6 +673,20 @@ export const UpdateAdminPatientPlanResponse = zod.object({
         reps: zod.number(),
         durationMinutes: zod.number(),
         instructions: zod.string(),
+        videoUrl: zod
+          .string()
+          .optional()
+          .describe(
+            "Optional embedded video URL (e.g. YouTube embed) for the exercise.",
+          ),
+        gifUrl: zod
+          .string()
+          .optional()
+          .describe("Optional GIF demo URL for the exercise."),
+        steps: zod
+          .array(zod.string())
+          .optional()
+          .describe("Optional ordered steps to perform the exercise."),
       }),
     ),
     lifestyleTips: zod.array(zod.string()),

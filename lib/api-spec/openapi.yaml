@@ -795,6 +795,17 @@ components:
           type: integer
         instructions:
           type: string
+        videoUrl:
+          type: string
+          description: Optional embedded video URL (e.g. YouTube embed) for the exercise.
+        gifUrl:
+          type: string
+          description: Optional GIF demo URL for the exercise.
+        steps:
+          type: array
+          items:
+            type: string
+          description: Optional ordered steps to perform the exercise.
 
     WeeklyDay:
       type: object
