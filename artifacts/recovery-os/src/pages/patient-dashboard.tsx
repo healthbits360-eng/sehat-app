@@ -1,8 +1,7 @@
 import { exercises } from "../lib/exercises";
 
 export default function PatientDashboard() {
-  const patientCondition = "knee"; // later dynamic
-
+  const patientCondition = localStorage.getItem("condition") || "knee";
   const filteredExercises = exercises.filter(
     (ex) => ex.condition === patientCondition
   );
