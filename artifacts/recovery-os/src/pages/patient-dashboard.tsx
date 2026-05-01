@@ -34,14 +34,17 @@ export default function PatientDashboard() {
         >
           <h3>{ex.name}</h3>
 
-          <iframe
-            width="300"
-            height="200"
+          {/* ✅ REPLACED iframe WITH image */}
+          <img
             src={ex.video}
-            title={ex.name}
-            frameBorder="0"
-            allowFullScreen
-          ></iframe>
+            alt={ex.name}
+            style={{
+              width: "300px",
+              height: "200px",
+              objectFit: "cover",
+              borderRadius: 10
+            }}
+          />
 
           <p><b>Reps:</b> {ex.reps}</p>
           <p><b>Sets:</b> {ex.sets}</p>
